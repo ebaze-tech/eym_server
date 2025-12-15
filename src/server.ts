@@ -4,6 +4,9 @@ import http from "http";
 import dotenv from "dotenv";
 import { connectDB } from "./config/db";
 
+import { router as registrationRoute } from "./membershipRegistration/membershipFormRoute";
+import { router as adminRoute } from "./admin/adminRoute";
+
 dotenv.config();
 
 const app = express();
@@ -11,7 +14,10 @@ const PORT = process.env.PORT;
 
 app.use(cors({ credentials: true }));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
+app.use(registrationRoute);
+app.use(adminRoute);
 app.get("/", (req, res) => {
   res.status(200).json({ message: "Server running" });
 });
