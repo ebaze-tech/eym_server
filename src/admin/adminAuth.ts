@@ -2,7 +2,7 @@ import express from "express";
 import bcrypt from "bcryptjs";
 import jwt, { SignOptions } from "jsonwebtoken";
 import { validationResult } from "express-validator";
-import { AdminModel } from "./adminModel";
+import { AdminModel, getAdminByUsername } from "./adminModel";
 require("dotenv").config();
 
 const { JWT_SECRET } = process.env;
@@ -30,14 +30,14 @@ export const AdminAuthController = {
     }
 
     try {
-      const existingUsername = await AdminModel.findOne({ username });
+      const existingUsername = await getAdminByUsername(username);
       console.log("Existing user check " + existingUsername);
 
       if (existingUsername) {
         return res.status(400).json({ message: "Username already used" });
       }
 
-      const hashedPassword = await bcrypt.hash(password, 20);
+      const hashedPassword = await bcrypt.hash(password, 10);
 
       const newUser = new AdminModel({
         username,
@@ -49,11 +49,13 @@ export const AdminAuthController = {
 
       return res.status(201).json({
         message: "Admin registered successfully",
-        adminId: newUser._id,
+        userId: newUser._id,
+        username: newUser.username,
       });
     } catch (error: any) {
       return res.status(500).json({
         message: "Error encountered during registration. Please, try again.",
+        error,
       });
     }
   },
