@@ -1,6 +1,7 @@
 import express from "express";
 import { AdminController } from "./adminController";
 import { authenticateToken } from "../middleware/auth";
+import { AdminAuthController } from "./adminAuth";
 export const router = express.Router();
 
 router.get(

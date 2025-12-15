@@ -1,12 +1,11 @@
 import express from "express";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
-import mongoose from "mongoose";
+import jwt, { SignOptions } from "jsonwebtoken";
 import { validationResult } from "express-validator";
 import { AdminModel } from "./adminModel";
 require("dotenv").config();
 
-const JWT_SECRET = process.env.JWT_SECRET;
+const { JWT_SECRET } = process.env;
 interface RequestPayload {
   username: string;
   password: string;
@@ -14,30 +13,45 @@ interface RequestPayload {
 
 export const AdminAuthController = {
   adminRegistration: async (req: express.Request, res: express.Response) => {
+    console.log("Registration attempt:", req.body);
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ message: "Invalid request" });
+      return res
+        .status(400)
+        .json({ message: "Invalid request", errors: errors.array() });
+    }
+
+    const { username, password }: RequestPayload = req.body;
+    console.log(username, password);
+
+    if (!username || !password) {
+      return res.status(400).json({ message: "All fields are required" });
     }
 
     try {
-      const { username, password }: RequestPayload = req.body;
-      if (!username || !password) {
-        return res.status(400).json({ message: "All fields are required" });
-      }
       const existingUsername = await AdminModel.findOne({ username });
+      console.log("Existing user check " + existingUsername);
+
       if (existingUsername) {
         return res.status(400).json({ message: "Username already used" });
       }
 
-      await AdminModel.create({
+      const hashedPassword = await bcrypt.hash(password, 20);
+
+      const newUser = new AdminModel({
         username,
-        password: await bcrypt.hash(password, 20),
+        password: hashedPassword,
       });
+
+      await newUser.save();
+      console.log("Admin saved:", newUser._id);
 
       return res.status(201).json({
         message: "Admin registered successfully",
+        adminId: newUser._id,
       });
-    } catch (error) {
+    } catch (error: any) {
       return res.status(500).json({
         message: "Error encountered during registration. Please, try again.",
       });
@@ -46,7 +60,9 @@ export const AdminAuthController = {
   adminLogin: async (req: express.Request, res: express.Response) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ message: "Invalid request" });
+      return res
+        .status(400)
+        .json({ message: "Invalid request", errors: errors.array() });
     }
 
     const { username, password }: RequestPayload = req.body;
@@ -71,9 +87,13 @@ export const AdminAuthController = {
         return res.status(400).json({ message: "Invalid email or password" });
       }
 
-      const token = jwt.sign({ id: user._id }, JWT_SECRET!, {
+      if (!JWT_SECRET) {
+        return res.status(500).json({ message: "JWT secret not configured" });
+      }
+
+      const token = jwt.sign({ id: user._id }, JWT_SECRET, {
         expiresIn: process.env.EXPIRES_IN ?? "1h",
-      });
+      } as SignOptions);
 
       return res.status(200).json({
         message: "Login successful",
