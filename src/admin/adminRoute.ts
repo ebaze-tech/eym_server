@@ -6,19 +6,19 @@ export const router = express.Router();
 
 router.get(
   "/all-registrations",
-  authenticateToken,
+  // authenticateToken,
   AdminController.getAllRegistrations
 );
 
 router.get(
   "/all-registrations/:userId",
-  authenticateToken,
+  // authenticateToken,
   AdminController.getMemberRegistration
 );
 
 router.patch(
   "/membership-application/:userId/reject",
-  authenticateToken,
+  // authenticateToken,
   AdminController.rejectMembership
 );
 

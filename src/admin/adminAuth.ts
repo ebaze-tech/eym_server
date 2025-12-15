@@ -1,25 +1,29 @@
 import express from "express";
 import bcrypt from "bcryptjs";
 import jwt, { SignOptions } from "jsonwebtoken";
+import mongoose from "mongoose";
 import { validationResult } from "express-validator";
 import { AdminModel, getAdminByUsername } from "./adminModel";
-require("dotenv").config();
+import dotenv from "dotenv";
 
-const { JWT_SECRET } = process.env;
+dotenv.config();
+
+const JWT_SECRET = process.env.JWT_SECRET as string;
+
 interface RequestPayload {
   username: string;
   password: string;
 }
 
 export const AdminAuthController = {
+  // ===============================
+  // ADMIN REGISTRATION
+  // ===============================
   adminRegistration: async (req: express.Request, res: express.Response) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      console.error(errors.array());
-
       return res.status(400).json({
         message: "Invalid request",
-        errors: errors.array(),
         success: false,
       });
     }
@@ -27,113 +31,116 @@ export const AdminAuthController = {
     const { username, password }: RequestPayload = req.body;
 
     if (!username || !password) {
-      return res
-        .status(400)
-        .json({ message: "All fields are required", success: false });
+      return res.status(400).json({
+        message: "Username and password are required",
+        success: false,
+      });
     }
 
     try {
-      const existingUsername = await getAdminByUsername(username);
-
-      if (existingUsername) {
-        return res
-          .status(400)
-          .json({ message: "Username already used", success: false });
+      const existingAdmin = await getAdminByUsername(username);
+      if (existingAdmin) {
+        return res.status(409).json({
+          message: "Username already exists",
+          success: false,
+        });
       }
 
-      const hashedPassword = await bcrypt.hash(password, 10);
+      // Stronger hashing
+      const hashedPassword = await bcrypt.hash(password, 12);
 
-      const newUser = new AdminModel({
+      const newAdmin = new AdminModel({
         username,
         password: hashedPassword,
       });
 
-      await newUser.save();
+      await newAdmin.save();
 
       return res.status(201).json({
         message: "Admin registered successfully",
-        userId: newUser._id,
-        username: newUser.username,
+        admin: {
+          id: newAdmin._id,
+          username: newAdmin.username,
+        },
         success: true,
       });
-    } catch (error: any) {
-      console.error(
-        "Error in admin registration controller. Debug soon",
-        error
-      );
+    } catch (error) {
+      console.error("Admin registration error:", error);
 
       return res.status(500).json({
-        message: "Error encountered during registration. Please, try again.",
-        error: error,
+        message: "Registration failed. Please try again later.",
         success: false,
       });
     }
   },
 
+  // ===============================
+  // ADMIN LOGIN
+  // ===============================
   adminLogin: async (req: express.Request, res: express.Response) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      console.error(errors.array());
-
       return res.status(400).json({
         message: "Invalid request",
-        errors: errors.array(),
         success: false,
       });
     }
 
     const { username, password }: RequestPayload = req.body;
+
     if (!username || !password) {
       return res.status(400).json({
-        message: "Username and password are required for login",
+        message: "Username and password are required",
         success: false,
       });
     }
 
     try {
-      const user = await AdminModel.findOne({ username }).select("+password");
-      if (!user) {
-        return res
-          .status(400)
-          .json({ message: "Username is invalid", success: false });
+      // Always use same error message to prevent username probing
+      const admin = await AdminModel.findOne({ username }).select("+password");
+
+      if (!admin || !admin.password) {
+        return res.status(401).json({
+          message: "Invalid username or password",
+          success: false,
+        });
       }
 
-      if (!user.password) {
-        return res
-          .status(400)
-          .json({ message: "Invalid password", success: false });
-      }
-
-      const isMatch = await bcrypt.compare(password, user.password);
+      const isMatch = await bcrypt.compare(password, admin.password);
       if (!isMatch) {
-        return res
-          .status(400)
-          .json({ message: "Invalid email or password", success: false });
+        return res.status(401).json({
+          message: "Invalid username or password",
+          success: false,
+        });
       }
 
       if (!JWT_SECRET) {
-        return res
-          .status(500)
-          .json({ message: "JWT secret not configured", success: false });
+        console.error("JWT_SECRET missing in environment variables");
+        return res.status(500).json({
+          message: "Authentication service unavailable",
+          success: false,
+        });
       }
 
-      const token = jwt.sign({ id: user._id }, JWT_SECRET, {
+      const token = jwt.sign({ id: admin._id, role: "admin" }, JWT_SECRET, {
         expiresIn: process.env.EXPIRES_IN ?? "1h",
       } as SignOptions);
 
       return res.status(200).json({
         message: "Login successful",
         token,
-        admin: { id: user._id, username: user.username },
+        admin: {
+          id: admin._id,
+          username: admin.username,
+        },
         success: true,
       });
     } catch (error) {
-      console.error("Error in admin login. Debug soon", error);
+      console.error("Admin login error:", error);
 
       return res.status(500).json({
-        message: "Error encountered during login. Please, try again.",
+        message: "Login failed. Please try again later.",
         success: false,
-        error: error,
       });
     }
   },

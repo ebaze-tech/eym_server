@@ -1,9 +1,10 @@
-require("dotenv").config();
 import express from "express";
-import { UserModel } from "./membershipFormModel";
+import mongoose from "mongoose";
+import dotenv from "dotenv";
 import { validationResult } from "express-validator";
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
+import { UserModel } from "./membershipFormModel";
+
+dotenv.config();
 
 interface RequestPayload {
   fullName: string;
@@ -24,87 +25,67 @@ export const MembershipController = {
   createMembership: async (req: express.Request, res: express.Response) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      console.error(errors.array());
-
       return res.status(400).json({
         message: "Validation failed",
-        errors: errors.array(),
         success: false,
       });
     }
 
-    try {
-      const {
-        fullName,
-        gender,
-        dateOfBirth,
-        religion,
-        phoneNumber,
-        residentialAddress,
-        town,
-        city,
-        country,
-        compound,
-        quarter,
-        occupation,
-      }: RequestPayload = req.body || {};
+    const {
+      fullName,
+      gender,
+      dateOfBirth,
+      religion,
+      phoneNumber,
+      residentialAddress,
+      town,
+      city,
+      country,
+      compound,
+      quarter,
+      occupation,
+    }: RequestPayload = req.body ?? {};
 
-      console.log(
-        fullName,
-        gender,
-        dateOfBirth,
-        religion,
-        phoneNumber,
-        residentialAddress,
-        town,
-        city,
-        country,
-        compound,
-        quarter,
-        occupation
-      );
+    // Centralized required field check
+    const requiredFields = {
+      fullName,
+      gender,
+      dateOfBirth,
+      religion,
+      phoneNumber,
+      residentialAddress,
+      town,
+      city,
+      country,
+      compound,
+      quarter,
+      occupation,
+    };
 
-      if (
-        !fullName ||
-        !gender ||
-        !dateOfBirth ||
-        !religion ||
-        !phoneNumber ||
-        !residentialAddress ||
-        !town ||
-        !city ||
-        !country ||
-        !compound ||
-        !quarter ||
-        !occupation
-      ) {
-        return res
-          .status(400)
-          .json({ message: "Missing required fields", success: false });
+    for (const [key, value] of Object.entries(requiredFields)) {
+      if (!value || typeof value !== "string") {
+        return res.status(400).json({
+          message: `Missing or invalid field: ${key}`,
+          success: false,
+        });
       }
-      const existingEntry = await UserModel.findOne({
+    }
+
+    try {
+      // Prevent duplicate registration by unique identifier
+      const existingUser = await UserModel.findOne({
         fullName,
-        gender,
-        dateOfBirth,
-        religion,
         phoneNumber,
-        residentialAddress,
-        town,
-        city,
-        country,
-        compound,
-        quarter,
-        occupation,
       });
 
-      if (existingEntry) {
+      if (existingUser) {
         return res.status(409).json({
-          message: "Registration data already exists.",
+          message: "A membership registration already exists for this user",
           success: false,
         });
       }
 
-      const createForm = new UserModel({
+      const newMembership = new UserModel({
         fullName,
         gender,
         dateOfBirth,
@@ -119,22 +100,25 @@ export const MembershipController = {
         occupation,
         status: "approved",
       });
-      await createForm.save();
 
-      return res.status(200).json({
-        message: "Registration successful",
-        createForm,
+      await newMembership.save();
+
+      return res.status(201).json({
+        message: "Membership registration submitted successfully",
+        data: {
+          id: newMembership._id,
+          fullName: newMembership.fullName,
+          status: newMembership.status,
+        },
         success: true,
       });
     } catch (error) {
-      console.error("Error in form creation", error);
-      return res
-        .status(500)
-        .json({
-          message: "Form not saved. Please, try again.",
-          error: error,
-          success: false,
-        });
+      console.error("Membership creation error:", error);
+
+      return res.status(500).json({
+        message: "Unable to submit membership registration",
+        success: false,
+      });
     }
   },
 };
