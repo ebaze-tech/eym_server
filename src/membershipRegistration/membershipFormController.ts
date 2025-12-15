@@ -112,6 +112,7 @@ export const MembershipController = {
         compound,
         quarter,
         occupation,
+        status: "approved",
       });
       await createForm.save();
 

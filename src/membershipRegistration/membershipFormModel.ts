@@ -13,6 +13,11 @@ const UserSchema = new mongoose.Schema({
   compound: { type: String },
   quarter: { type: String },
   occupation: { type: String },
+  status: {
+    type: String,
+    enum: ["approved", "rejected"],
+    default: "approved",
+  },
 });
 
 export const UserModel = mongoose.model("User", UserSchema);

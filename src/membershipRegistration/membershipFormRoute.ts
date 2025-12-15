@@ -5,6 +5,6 @@ export const router = express.Router();
 
 router.post(
   "/member-registration",
-  authenticateToken,
+  // authenticateToken,
   MembershipController.createMembership
 );
