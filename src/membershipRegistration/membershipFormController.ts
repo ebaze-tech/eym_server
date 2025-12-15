@@ -24,6 +24,8 @@ export const MembershipController = {
   createMembership: async (req: express.Request, res: express.Response) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.error(errors.array());
+
       return res.status(400).json({
         message: "Validation failed",
         errors: errors.array(),
@@ -76,7 +78,9 @@ export const MembershipController = {
         !quarter ||
         !occupation
       ) {
-        return res.status(400).json({ message: "Missing required fields" });
+        return res
+          .status(400)
+          .json({ message: "Missing required fields", success: false });
       }
       const existingEntry = await UserModel.findOne({
         fullName,
@@ -94,9 +98,10 @@ export const MembershipController = {
       });
 
       if (existingEntry) {
-        return res
-          .status(409)
-          .json({ message: "Registration data already exists." });
+        return res.status(409).json({
+          message: "Registration data already exists.",
+          success: false,
+        });
       }
 
       const createForm = new UserModel({
@@ -116,14 +121,20 @@ export const MembershipController = {
       });
       await createForm.save();
 
-      return res
-        .status(200)
-        .json({ message: "Registration successful", createForm });
+      return res.status(200).json({
+        message: "Registration successful",
+        createForm,
+        success: true,
+      });
     } catch (error) {
-      console.error(error);
+      console.error("Error in form creation", error);
       return res
         .status(500)
-        .json({ message: "Form not saved. Please, try again.", error });
+        .json({
+          message: "Form not saved. Please, try again.",
+          error: error,
+          success: false,
+        });
     }
   },
 };
