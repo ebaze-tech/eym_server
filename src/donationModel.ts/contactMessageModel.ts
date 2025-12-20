@@ -19,4 +19,4 @@ const contactMessageSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.model("ContactMessage", contactMessageSchema);
+export default mongoose.model("Contact Message", contactMessageSchema);
