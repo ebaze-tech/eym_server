@@ -2,16 +2,43 @@ import express from "express";
 import { resend } from "../config/resend";
 import contactMessageModel from "./contactMessageModel";
 import { validationResult } from "express-validator";
+import { partnershipModel } from "./partnershipModel";
 
-export async function contactMail(req: express.Request, res: express.Response) {
+interface PartnershipPayload {
+  organizationName: string;
+  contactPerson: string;
+  email: string;
+  phoneNumber: string;
+  partnershipType: string;
+  message: string;
+}
+
+export async function partnershipMail(
+  req: express.Request,
+  res: express.Response
+) {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ message: "Invalid request", success: false });
   }
 
-  const { firstName, lastName, email, phone, subject, message } = req.body;
+  const {
+    organizationName,
+    contactPerson,
+    email,
+    phoneNumber,
+    partnershipType,
+    message,
+  }: PartnershipPayload = req.body;
 
-  if (!firstName || !lastName || !email || !message) {
+  if (
+    !organizationName ||
+    !contactPerson ||
+    !email ||
+    !message ||
+    !phoneNumber ||
+    !partnershipType
+  ) {
     return res.status(400).json({
       error: "Required fields are missing",
     });
@@ -22,13 +49,13 @@ export async function contactMail(req: express.Request, res: express.Response) {
       from: email,
       to: ["eymsince1961@gmail.com"],
       replyTo: email,
-      subject: `New Contact Message: ${subject || "No Subject"}`,
+      subject: `New Partnership Notification from ${contactPerson}`,
       html: `
-        <!DOCTYPE html>
+<!DOCTYPE html>
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>New Contact Message</title>
+    <title>New Partnership Request</title>
     <style>
       body {
         margin: 0;
@@ -45,7 +72,7 @@ export async function contactMail(req: express.Request, res: express.Response) {
         box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
       }
       .header {
-        background-color: #2b59c3;
+        background-color: #0f766e;
         padding: 24px;
         text-align: center;
         color: #ffffff;
@@ -59,9 +86,9 @@ export async function contactMail(req: express.Request, res: express.Response) {
         color: #555;
       }
       .message {
-        background: #f1f5ff;
+        background: #ecfeff;
         padding: 16px;
-        border-left: 4px solid #2b59c3;
+        border-left: 4px solid #0f766e;
         border-radius: 6px;
         margin-top: 20px;
         line-height: 1.6;
@@ -79,14 +106,19 @@ export async function contactMail(req: express.Request, res: express.Response) {
   <body>
     <div class="container">
       <div class="header">
-        <h2>New Contact Form Message</h2>
+        <h2>New Partnership Request</h2>
+        <p>Eruwa Youth Movement</p>
       </div>
 
       <div class="content">
-        <p><span class="label">Name:</span> ${firstName} ${lastName}</p>
+        <p><span class="label">Organization Name:</span>${organizationName}</p>
         <p><span class="label">Email:</span> ${email}</p>
-        <p><span class="label">Phone:</span> ${phone || "Not provided"}</p>
-        <p><span class="label">Subject:</span> ${subject || "N/A"}</p>
+        <p><span class="label">Phone:</span> ${
+          phoneNumber || "Not provided"
+        }</p>
+        <p><span class="label">Proposed Partnership:</span> ${
+          partnershipType || "General Partnership"
+        }</p>
 
         <div class="message">
           ${message.replace(/\n/g, "<br />")}
@@ -94,21 +126,21 @@ export async function contactMail(req: express.Request, res: express.Response) {
       </div>
 
       <div class="footer">
-        <p>This message was sent from the Eruwa Youth Movement website.</p>
-        <p>Reply directly to this email to respond.</p>
+        <p>This partnership request was submitted via the EYM website.</p>
+        <p>You can reply directly to this email to continue the discussion.</p>
       </div>
     </div>
   </body>
 </html>
-      `,
+`,
     });
 
-    await contactMessageModel.create({
-      firstName,
-      lastName,
+    await partnershipModel.create({
+      organizationName,
+      contactPerson,
       email,
-      phone,
-      subject,
+      phoneNumber,
+      partnershipType,
       message,
       emailId: emailSent.data?.id,
       status: emailSent.error ? "failed" : "sent",

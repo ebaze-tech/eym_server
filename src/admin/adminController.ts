@@ -2,7 +2,7 @@ import express from "express";
 import mongoose from "mongoose";
 import { validationResult } from "express-validator";
 import { UserModel } from "../membershipRegistration/membershipFormModel";
-import contactMessageModel from "../donationModel.ts/contactMessageModel";
+import contactMessageModel from "../mailer/contactMessageModel";
 
 export const AdminController = {
   // GET ALL REGISTRATIONS (ADMIN ONLY)

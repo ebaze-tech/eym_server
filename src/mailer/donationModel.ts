@@ -17,4 +17,4 @@ const donationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export const donationModel = mongoose.model("Donation Message", donationSchema);
+export const donationModel = mongoose.model("Donations", donationSchema);
