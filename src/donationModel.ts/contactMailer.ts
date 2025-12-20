@@ -1,7 +1,14 @@
 import express from "express";
 import { resend } from "../config/resend";
+import contactMessageModel from "./contactMessageModel";
+import { validationResult } from "express-validator";
 
 export async function contactMail(req: express.Request, res: express.Response) {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ message: "Invalid request", success: false });
+  }
+
   const { firstName, lastName, email, phone, subject, message } = req.body;
 
   if (!firstName || !lastName || !email || !message) {
@@ -13,7 +20,7 @@ export async function contactMail(req: express.Request, res: express.Response) {
   try {
     const emailSent = await resend.emails.send({
       from: email,
-      to: ["eymsince1961@gmail.com"], 
+      to: ["eymsince1961@gmail.com"],
       replyTo: email,
       subject: `New Contact Message: ${subject || "No Subject"}`,
       html: `
@@ -96,7 +103,16 @@ export async function contactMail(req: express.Request, res: express.Response) {
       `,
     });
 
-    console.log(emailSent);
+    await contactMessageModel.create({
+      firstName,
+      lastName,
+      email,
+      phone,
+      subject,
+      message,
+      emailId: emailSent.data?.id,
+      status: emailSent.error ? "failed" : "sent",
+    });
 
     return res.status(200).json({
       success: true,

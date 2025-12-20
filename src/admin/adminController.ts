@@ -2,6 +2,7 @@ import express from "express";
 import mongoose from "mongoose";
 import { validationResult } from "express-validator";
 import { UserModel } from "../membershipRegistration/membershipFormModel";
+import contactMessageModel from "../donationModel.ts/contactMessageModel";
 
 export const AdminController = {
   // GET ALL REGISTRATIONS (ADMIN ONLY)
@@ -135,6 +136,38 @@ export const AdminController = {
         message: "Unable to update membership status",
         success: false,
       });
+    }
+  },
+
+  getEmails: async (req: express.Request, res: express.Response) => {
+    try {
+      const messages = await contactMessageModel.find().sort({ createdAt: -1 });
+
+      return res.status(200).json({
+        message: "Emails fetched successfully",
+        emails: messages,
+        success: true,
+      });
+    } catch (error) {
+      res
+        .status(500)
+        .json({ error: "Failed to fetch messages", success: false });
+    }
+  },
+
+  getAnEmail: async (req: express.Request, res: express.Response) => {
+    try {
+      const { userId } = req.params;
+      const message = await contactMessageModel.findById(userId);
+
+      return res
+        .status(200)
+        .json({ message: "Email found", email: message, success: true });
+    } catch (error) {
+      console.error("Failed to fetch email:", error);
+      return res
+        .status(500)
+        .json({ message: "Failed to fetch email", success: false });
     }
   },
 };

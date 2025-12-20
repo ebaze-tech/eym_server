@@ -1,5 +1,5 @@
 import express from "express";
-import { contactMail } from "./mailer";
+import { contactMail } from "./contactMailer";
 
 export const router = express.Router();
 

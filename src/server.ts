@@ -6,7 +6,8 @@ import { connectDB } from "./config/db";
 
 import { router as registrationRoute } from "./membershipRegistration/membershipFormRoute";
 import { router as adminRoute } from "./admin/adminRoute";
-import { router as emailRoute } from "./mailer/mailerRoute";
+import { router as emailRoute } from "./donationModel.ts/mailerRoute";
+import { router as donationRoute } from "./donationModel.ts/donationRoute";
 
 const { PORT, ALLOWED_ORIGIN } = process.env;
 
@@ -21,6 +22,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(registrationRoute);
 app.use(adminRoute);
 app.use(emailRoute);
+app.use(donationRoute);
+
 app.get("/", (req, res) => {
   res.status(200).json({ message: "Server running" });
 });
