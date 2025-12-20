@@ -6,18 +6,21 @@ import { connectDB } from "./config/db";
 
 import { router as registrationRoute } from "./membershipRegistration/membershipFormRoute";
 import { router as adminRoute } from "./admin/adminRoute";
+import { router as emailRoute } from "./mailer/mailerRoute";
+
+const { PORT, ALLOWED_ORIGIN } = process.env;
 
 dotenv.config();
 
 const app = express();
-const { PORT } = process.env;
 
-app.use(cors({ credentials: true }));
+app.use(cors({ credentials: true, origin: ALLOWED_ORIGIN }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(registrationRoute);
 app.use(adminRoute);
+app.use(emailRoute);
 app.get("/", (req, res) => {
   res.status(200).json({ message: "Server running" });
 });
