@@ -9,6 +9,7 @@ import { router as adminRoute } from "./admin/adminRoute";
 import { router as emailRoute } from "./mailer/mailerRoute";
 import { router as donationRoute } from "./mailer/donationRoute";
 import { router as partnershipRoute } from "./mailer/partnershipRoute";
+import { router as volunteerRoute } from "./mailer/volunteerRoute";
 
 const { PORT, ALLOWED_ORIGIN } = process.env;
 
@@ -25,6 +26,7 @@ app.use(adminRoute);
 app.use(emailRoute);
 app.use(donationRoute);
 app.use(partnershipRoute);
+app.use(volunteerRoute);
 
 app.get("/", (req, res) => {
   res.status(200).json({ message: "Server running" });

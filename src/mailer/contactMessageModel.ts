@@ -16,7 +16,7 @@ const contactMessageSchema = new mongoose.Schema(
       default: "sent",
     },
   },
-  { timestamps: true }
+  { timestamps: true, collection: "Contact Message" }
 );
 
 export default mongoose.model("Contact Message", contactMessageSchema);

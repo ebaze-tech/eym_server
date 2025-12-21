@@ -10,13 +10,21 @@ router.get(
   AdminController.getAllRegistrations
 );
 
+router.delete("/delete-registration/:userId", AdminController.deleteMembership);
+
 router.get(
   "/all-registrations/:userId",
   // authenticateToken,
   AdminController.getMemberRegistration
 );
 
-router.patch(
+router.get("/all-mails", AdminController.getEmails);
+router.get("/all-partners", AdminController.getPartners);
+router.get("/all-donors", AdminController.getDonations);
+
+router.get("/all-emails/:userId", AdminController.getAnEmail);
+
+router.post(
   "/membership-application/:userId/reject",
   // authenticateToken,
   AdminController.rejectMembership

@@ -3,6 +3,8 @@ import mongoose from "mongoose";
 import { validationResult } from "express-validator";
 import { UserModel } from "../membershipRegistration/membershipFormModel";
 import contactMessageModel from "../mailer/contactMessageModel";
+import { donationModel } from "../mailer/donationModel";
+import { partnershipModel } from "../mailer/partnershipModel";
 
 export const AdminController = {
   // GET ALL REGISTRATIONS (ADMIN ONLY)
@@ -20,16 +22,10 @@ export const AdminController = {
         .select("-__v") // hide internal fields
         .lean(); // prevents mongoose document mutation
 
-      if (!users || users.length === 0) {
-        return res.status(404).json({
-          message: "No registrations found",
-          success: false,
-        });
-      }
-
+      // Always return 200, even if empty
       return res.status(200).json({
         message: "Retrieved all registrations",
-        data: users,
+        data: users || [],
         success: true,
       });
     } catch (error) {
@@ -57,7 +53,6 @@ export const AdminController = {
 
     const { userId } = req.params;
 
-    // Prevent NoSQL / Cast errors
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(400).json({
         message: "Invalid user ID format",
@@ -113,7 +108,7 @@ export const AdminController = {
     try {
       const updatedUser = await UserModel.findByIdAndUpdate(
         userId,
-        { status: "unapproved" },
+        { status: "rejected" },
         { new: true, runValidators: true }
       ).select("-__v");
 
@@ -138,6 +133,51 @@ export const AdminController = {
       });
     }
   },
+  deleteMembership: async (req: express.Request, res: express.Response) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        message: "Invalid request",
+        success: false,
+      });
+    }
+
+    const { userId } = req.params;
+
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({
+        message: "Invalid user ID format",
+        success: false,
+      });
+    }
+
+    try {
+      const deletedUser = await UserModel.findByIdAndDelete(userId).select(
+        "-__v"
+      );
+
+      if (!deletedUser) {
+        return res.status(404).json({
+          message: "User not found",
+          success: false,
+        });
+      }
+
+      return res.status(200).json({
+        message: "Membership deleted successfully",
+        data: deletedUser,
+        success: true,
+      });
+    } catch (error) {
+      console.error("Delete membership error:", error);
+
+      return res.status(500).json({
+        message: "Unable to delete membership",
+        success: false,
+      });
+    }
+  },
 
   getEmails: async (req: express.Request, res: express.Response) => {
     try {
@@ -145,7 +185,39 @@ export const AdminController = {
 
       return res.status(200).json({
         message: "Emails fetched successfully",
-        emails: messages,
+        data: messages,
+        success: true,
+      });
+    } catch (error) {
+      res
+        .status(500)
+        .json({ error: "Failed to fetch messages", success: false });
+    }
+  },
+
+    getDonations: async (req: express.Request, res: express.Response) => {
+    try {
+      const donations = await donationModel.find().sort({ createdAt: -1 });
+
+      return res.status(200).json({
+        message: "Donations fetched successfully",
+        data: donations,
+        success: true,
+      });
+    } catch (error) {
+      res
+        .status(500)
+        .json({ error: "Failed to fetch messages", success: false });
+    }
+  },
+
+      getPartners: async (req: express.Request, res: express.Response) => {
+    try {
+      const partners = await partnershipModel.find().sort({ createdAt: -1 });
+
+      return res.status(200).json({
+        message: "Partnerships fetched successfully",
+        data: partners,
         success: true,
       });
     } catch (error) {
@@ -162,7 +234,7 @@ export const AdminController = {
 
       return res
         .status(200)
-        .json({ message: "Email found", email: message, success: true });
+        .json({ message: "Email found", data: message, success: true });
     } catch (error) {
       console.error("Failed to fetch email:", error);
       return res

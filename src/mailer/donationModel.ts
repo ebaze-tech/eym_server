@@ -14,7 +14,7 @@ const donationSchema = new mongoose.Schema(
       default: "sent",
     },
   },
-  { timestamps: true }
+  { timestamps: true, collection: "Donations" }
 );
 
 export const donationModel = mongoose.model("Donations", donationSchema);

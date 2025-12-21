@@ -1,24 +1,27 @@
 import mongoose from "mongoose";
 
-const UserSchema = new mongoose.Schema({
-  fullName: { type: String, required: true, unique: true },
-  gender: { type: String },
-  dateOfBirth: { type: String },
-  religion: { type: String },
-  phoneNumber: { type: String },
-  residentialAddress: { type: String },
-  town: { type: String },
-  city: { type: String },
-  country: { type: String },
-  compound: { type: String },
-  quarter: { type: String },
-  occupation: { type: String },
-  status: {
-    type: String,
-    enum: ["approved", "rejected"],
-    default: "approved",
+const UserSchema = new mongoose.Schema(
+  {
+    fullName: { type: String, required: true, unique: true },
+    gender: { type: String },
+    dateOfBirth: { type: String },
+    religion: { type: String },
+    phoneNumber: { type: String },
+    residentialAddress: { type: String },
+    town: { type: String },
+    city: { type: String },
+    country: { type: String },
+    compound: { type: String },
+    quarter: { type: String },
+    occupation: { type: String },
+    status: {
+      type: String,
+      enum: ["approved", "rejected"],
+      default: "approved",
+    },
   },
-});
+  { timestamps: true, collection: "Membership Form" }
+);
 
 export const UserModel = mongoose.model("User", UserSchema);
 

@@ -16,7 +16,7 @@ const PartnershipSchema = new mongoose.Schema(
       default: "sent",
     },
   },
-  { timestamps: true }
+  { timestamps: true, collection: "Partnerships" }
 );
 
 export const partnershipModel = mongoose.model(
