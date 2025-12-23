@@ -11,6 +11,7 @@ router.get(
 );
 
 router.delete("/delete-registration/:userId", AdminController.deleteMembership);
+router.patch("/update-registration/:userId", AdminController.updateMembership);
 
 router.get(
   "/all-registrations/:userId",
