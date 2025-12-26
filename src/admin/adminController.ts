@@ -242,4 +242,75 @@ export const AdminController = {
         .json({ message: "Failed to fetch email", success: false });
     }
   },
+
+  updateMembership: async (req: express.Request, res: express.Response) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        message: "Invalid request",
+        success: false,
+      });
+    }
+
+    const { userId } = req.params;
+    const updates = req.body;
+
+    if (!updates || Object.keys(updates).length === 0) {
+      return res.status(400).json({
+        message: "No update data provided",
+        success: false,
+      });
+    }
+
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({
+        message: "Invalid user ID format",
+        success: false,
+      });
+    }
+
+    try {
+      // Prevent updating immutable fields
+      delete updates._id;
+      delete updates.createdAt;
+      delete updates.updatedAt;
+
+      const updatedUser = await UserModel.findByIdAndUpdate(
+        userId,
+        { $set: updates },
+        { new: true, runValidators: true }
+      ).select("-__v");
+
+      if (!updatedUser) {
+        return res.status(404).json({
+          message: "User not found",
+          success: false,
+        });
+      }
+
+      return res.status(200).json({
+        message: "Membership updated successfully",
+        data: updatedUser,
+        success: true,
+      });
+    } catch (error: any) {
+      console.error("Update membership error:", error);
+
+      // Handle duplicate key error
+      if (error.code === 11000) {
+        return res.status(409).json({
+          message: "Duplicate field value entered",
+          error: error.keyValue,
+          success: false,
+        });
+      }
+
+      return res.status(500).json({
+        message: "Unable to update membership",
+        error: error.message,
+        success: false,
+      });
+    }
+  },
 };
