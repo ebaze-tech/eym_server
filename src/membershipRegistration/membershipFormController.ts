@@ -13,7 +13,7 @@ interface RequestPayload {
   religion: string;
   phoneNumber: string;
   residentialAddress: string;
-  town: string;
+  // town: string;
   city: string;
   country: string;
   compound: string;
@@ -38,7 +38,7 @@ export const MembershipController = {
       religion,
       phoneNumber,
       residentialAddress,
-      town,
+      // town,
       city,
       country,
       compound,
@@ -54,7 +54,7 @@ export const MembershipController = {
       religion,
       phoneNumber,
       residentialAddress,
-      town,
+      // town,
       city,
       country,
       compound,
@@ -92,7 +92,7 @@ export const MembershipController = {
         religion,
         phoneNumber,
         residentialAddress,
-        town,
+        // town,
         city,
         country,
         compound,

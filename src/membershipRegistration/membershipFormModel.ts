@@ -8,7 +8,7 @@ const UserSchema = new mongoose.Schema(
     religion: { type: String },
     phoneNumber: { type: String },
     residentialAddress: { type: String },
-    town: { type: String },
+    // town: { type: String },
     city: { type: String },
     country: { type: String },
     compound: { type: String },
